@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance Dashboard - Samanga Utilities</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .header h1 i {
+            margin-right: 10px;
+        }
+        .header .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .currency-badge {
+            background: #ffc107;
+            color: #333;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 13px;
+            margin-left: 10px;
+        }
+
+        /* Navigation */
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .nav-links a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        .card .number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        .card .label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .card .icon {
+            float: right;
+            font-size: 32px;
+            opacity: 0.2;
+        }
+        .card.green .number { color: #2e7d32; }
+        .card.orange .number { color: #e65100; }
+        .card.red .number { color: #c62828; }
+        .card.purple .number { color: #6a1b9a; }
+
+        /* Filters */
+        .filters {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .filters input, .filters select {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            flex: 1 1 180px;
+            min-width: 150px;
+        }
+        .filters input:focus, .filters select:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+        }
+        .filters .btn {
+            padding: 10px 20px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .filters .btn:hover {
+            background: #1557b0;
+        }
+        .filters .btn-outline {
+            background: transparent;
+            color: #1a73e8;
+            border: 1px solid #1a73e8;
+        }
+        .filters .btn-outline:hover {
+            background: #e8f0fe;
+        }
+        .filters .btn-success {
+            background: #2e7d32;
+            color: white;
+        }
+        .filters .btn-success:hover {
+            background: #1b5e20;
+        }
+
+        /* Table */
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        thead {
+            background: #f8f9fa;
+        }
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e9ecef;
+            white-space: nowrap;
+        }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+        tr:hover {
+            background: #f8f9ff;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .status-pending { background: #fff3e0; color: #e65100; }
+        .status-supervisor_approved { background: #e3f2fd; color: #0d47a1; }
+        .status-manager_approved { background: #e8f5e9; color: #1b5e20; }
+        .status-ceo_approved { background: #f3e5f5; color: #4a148c; }
+        .status-finance_approved { background: #e0f7fa; color: #00695c; }
+        .status-completed { background: #c8e6c9; color: #1b5e20; }
+        .status-rejected { background: #ffcdd2; color: #b71c1c; }
+
+        .amount {
+            font-weight: 600;
+            color: #1a73e8;
+        }
+        .amount.positive { color: #2e7d32; }
+        .amount.negative { color: #c62828; }
+
+        .items-count {
+            font-size: 12px;
+            color: #888;
+        }
+        .approval-timeline {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .approval-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+        }
+        .approval-dot.pending { background: #ccc; }
+        .approval-dot.approved { background: #2e7d32; }
+        .approval-dot.rejected { background: #c62828; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .loading i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            display: block;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Currency toggle */
+        .currency-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .currency-toggle button {
+            padding: 6px 16px;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            background: white;
+            transition: all 0.3s;
+        }
+        .currency-toggle button.active {
+            border-color: #1a73e8;
+            background: #1a73e8;
+            color: white;
+        }
+        .currency-toggle button:hover {
+            border-color: #1a73e8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .filters {
+                flex-direction: column;
+            }
+            .filters input, .filters select, .filters .btn {
+                width: 100%;
+                flex: none;
+            }
+            .currency-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Navigation -->
+    <div class="nav-links">
+        <a href="/">📝 Submit Requisition</a>
+        <a href="/tracking">🔍 Track Requisition</a>
+        <a href="/finance-dashboard.html">📊 Finance Dashboard</a>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-chart-pie"></i> Finance Dashboard</h1>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <span class="badge"><i class="fas fa-sync-alt"></i> Live</span>
+            <span class="badge"><i class="fas fa-clock"></i> <span id="lastUpdated">Just now</span></span>
+            <span class="currency-badge"><i class="fas fa-coins"></i> UGX</span>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid" id="summaryCards">
+        <div class="card">
+            <i class="fas fa-file-invoice icon"></i>
+            <div class="number" id="totalRequisitions">0</div>
+            <div class="label">Total Requisitions</div>
+        </div>
+        <div class="card green">
+            <i class="fas fa-coins icon"></i>
+            <div class="number" id="totalAmount">UGX 0</div>
+            <div class="label">Total Amount Requested</div>
+        </div>
+        <div class="card orange">
+            <i class="fas fa-hourglass-half icon"></i>
+            <div class="number" id="pendingAmount">UGX 0</div>
+            <div class="label">Pending Approval</div>
+        </div>
+        <div class="card purple">
+            <i class="fas fa-check-circle icon"></i>
+            <div class="number" id="completedAmount">UGX 0</div>
+            <div class="label">Completed / Released</div>
+        </div>
+        <div class="card red">
+            <i class="fas fa-times-circle icon"></i>
+            <div class="number" id="rejectedAmount">0</div>
+            <div class="label">Rejected</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+        <input type="text" id="searchInput" placeholder="🔍 Search by ref, project, requestor..." />
+        <select id="statusFilter">
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="supervisor_approved">Supervisor Approved</option>
+            <option value="manager_approved">Manager Approved</option>
+            <option value="ceo_approved">CEO Approved</option>
+            <option value="finance_approved">Finance Approved</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+        </select>
+        <select id="sortBy">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="amount_high">Highest Amount</option>
+            <option value="amount_low">Lowest Amount</option>
+        </select>
+        <button class="btn" onclick="applyFilters()"><i class="fas fa-filter"></i> Apply Filters</button>
+        <button class="btn btn-outline" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
+        <button class="btn btn-success" onclick="exportCSV()"><i class="fas fa-download"></i> Export CSV</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper">
+        <div id="loadingState" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading requisitions...</p>
+        </div>
+        <div id="tableContent" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Project</th>
+                        <th>Requestor</th>
+                        <th>Items</th>
+                        <th>Total Amount (UGX)</th>
+                        <th>Status</th>
+                        <th>Approvals</th>
+                        <th>Submitted</th>
+                    </tr>
+                </thead>
+                <tbody id="requisitionsTable"></tbody>
+            </table>
+        </div>
+        <div id="emptyState" style="display: none; text-align: center; padding: 40px; color: #888;">
+            <i class="fas fa-inbox" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+            <p>No requisitions found matching your criteria.</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let allRequisitions = [];
+    let currentCurrency = 'UGX';
+    const EXCHANGE_RATE = 3700; // 1 USD = 3700 UGX
+
+    // ====== Helper Functions ======
+    function getStatusClass(status) {
+        return `status-${status}`;
+    }
+
+    function getStatusLabel(status) {
+        return status.replace(/_/g, ' ').toUpperCase();
+    }
+
+    function getApprovalDot(role, approvals) {
+        const found = approvals.find(a => a.role === role);
+        if (!found) return `<span class="approval-dot pending">?</span>`;
+        const cls = found.status === 'approved' ? 'approved' : found.status === 'rejected' ? 'rejected' : 'pending';
+        const label = found.status === 'approved' ? '✓' : found.status === 'rejected' ? '✗' : '•';
+        return `<span class="approval-dot ${cls}" title="${role}: ${found.status}">${label}</span>`;
+    }
+
+    function formatCurrency(amount) {
+        if (currentCurrency === 'UGX') {
+            return 'UGX ' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        } else {
+            return '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    function convertToUGX(usdAmount) {
+        return usdAmount * EXCHANGE_RATE;
+    }
+
+    function getTotalAmount(req) {
+        return req.items.reduce((sum, item) => sum + (item.totalPrice || item.quantity * (item.unitPrice || 0)), 0);
+    }
+
+    function getTotalAmountUGX(req) {
+        return convertToUGX(getTotalAmount(req));
+    }
+
+    // ====== Load Data ======
+    async function loadData() {
+        try {
+            const response = await fetch('/api/requisitions');
+            const result = await response.json();
+
+            if (result.success) {
+                allRequisitions = result.data;
+                renderDashboard(allRequisitions);
+            } else {
+                console.error('API error:', result.message);
+                showError('Failed to load requisitions.');
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+            showError('Network error. Please try again.');
+        }
+    }
+
+    // ====== Render Dashboard ======
+    function renderDashboard(data) {
+        const table = document.getElementById('requisitionsTable');
+        const emptyState = document.getElementById('emptyState');
+        const loadingState = document.getElementById('loadingState');
+        const tableContent = document.getElementById('tableContent');
+
+        loadingState.style.display = 'none';
+        tableContent.style.display = 'block';
+
+        if (data.length === 0) {
+            emptyState.style.display = 'block';
+            table.innerHTML = '';
+            updateSummary([]);
+            return;
+        }
+        emptyState.style.display = 'none';
+
+        let html = '';
+        data.forEach(req => {
+            const totalUSD = getTotalAmount(req);
+            const totalUGX = convertToUGX(totalUSD);
+            const statusClass = getStatusClass(req.status);
+            const statusLabel = getStatusLabel(req.status);
+
+            const roles = ['supervisor', 'manager', 'ceo', 'finance'];
+            const dots = roles.map(r => getApprovalDot(r, req.approvals || [])).join('');
+
+            html += `
+                <tr>
+                    <td><strong>${req.referenceNumber || 'N/A'}</strong></td>
+                    <td>${req.projectName || 'N/A'}</td>
+                    <td>${req.requestor?.name || 'N/A'}</td>
+                    <td>
+                        ${req.items?.length || 0} item(s)
+                        <span class="items-count">
+                            (${req.items?.map(i => i.quantity).reduce((a,b) => a+b, 0) || 0} total)
+                        </span>
+                    </td>
+                    <td class="amount">${formatCurrency(totalUGX)}</td>
+                    <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                    <td><div class="approval-timeline">${dots}</div></td>
+                    <td>${new Date(req.createdAt).toLocaleDateString()}</td>
+                </tr>
+            `;
+        });
+
+        table.innerHTML = html;
+        updateSummary(data);
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+    }
+
+    // ====== Update Summary Cards ======
+    function updateSummary(data) {
+        let totalReqs = data.length;
+        let totalAmountUSD = 0;
+        let pendingAmountUSD = 0;
+        let completedAmountUSD = 0;
+        let rejectedCount = 0;
+
+        data.forEach(req => {
+            const total = getTotalAmount(req);
+            totalAmountUSD += total;
+
+            if (req.status === 'completed' || req.status === 'finance_approved') {
+                completedAmountUSD += total;
+            } else if (req.status === 'rejected') {
+                rejectedCount++;
+            } else {
+                pendingAmountUSD += total;
+            }
+        });
+
+        const totalAmountUGX = convertToUGX(totalAmountUSD);
+        const pendingAmountUGX = convertToUGX(pendingAmountUSD);
+        const completedAmountUGX = convertToUGX(completedAmountUSD);
+
+        document.getElementById('totalRequisitions').textContent = totalReqs;
+        document.getElementById('totalAmount').textContent = formatCurrency(totalAmountUGX);
+        document.getElementById('pendingAmount').textContent = formatCurrency(pendingAmountUGX);
+        document.getElementById('completedAmount').textContent = formatCurrency(completedAmountUGX);
+        document.getElementById('rejectedAmount').textContent = rejectedCount;
+    }
+
+    // ====== Filters ======
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value.toLowerCase().trim();
+        const status = document.getElementById('statusFilter').value;
+        const sort = document.getElementById('sortBy').value;
+
+        let filtered = allRequisitions;
+
+        if (search) {
+            filtered = filtered.filter(req =>
+                (req.referenceNumber && req.referenceNumber.toLowerCase().includes(search)) ||
+                (req.projectName && req.projectName.toLowerCase().includes(search)) ||
+                (req.requestor && req.requestor.name && req.requestor.name.toLowerCase().includes(search)) ||
+                (req.requestor && req.requestor.email && req.requestor.email.toLowerCase().includes(search))
+            );
+        }
+
+        if (status !== 'all') {
+            filtered = filtered.filter(req => req.status === status);
+        }
+
+        if (sort === 'newest') {
+            filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        } else if (sort === 'oldest') {
+            filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        } else if (sort === 'amount_high') {
+            filtered.sort((a, b) => getTotalAmount(b) - getTotalAmount(a));
+        } else if (sort === 'amount_low') {
+            filtered.sort((a, b) => getTotalAmount(a) - getTotalAmount(b));
+        }
+
+        renderDashboard(filtered);
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = 'all';
+        document.getElementById('sortBy').value = 'newest';
+        applyFilters();
+    }
+
+    // ====== Export CSV ======
+    function exportCSV() {
+        if (allRequisitions.length === 0) {
+            alert('No data to export.');
+            return;
+        }
+
+        let csv = 'Reference,Project,Requestor,Email,Department,Items,Total Amount (USD),Total Amount (UGX),Status,Supervisor,Manager,CEO,Finance,Submitted\n';
+
+        allRequisitions.forEach(req => {
+            const totalUSD = getTotalAmount(req);
+            const totalUGX = convertToUGX(totalUSD);
+            const supervisor = req.approvals?.find(a => a.role === 'supervisor')?.status || 'N/A';
+            const manager = req.approvals?.find(a => a.role === 'manager')?.status || 'N/A';
+            const ceo = req.approvals?.find(a => a.role === 'ceo')?.status || 'N/A';
+            const finance = req.approvals?.find(a => a.role === 'finance')?.status || 'N/A';
+
+            const row = [
+                req.referenceNumber || 'N/A',
+                `"${req.projectName || 'N/A'}"`,
+                `"${req.requestor?.name || 'N/A'}"`,
+                req.requestor?.email || 'N/A',
+                req.requestor?.department || 'N/A',
+                req.items?.length || 0,
+                totalUSD.toFixed(2),
+                totalUGX.toFixed(0),
+                req.status || 'N/A',
+                supervisor,
+                manager,
+                ceo,
+                finance,
+                new Date(req.createdAt).toLocaleDateString()
+            ].join(',');
+
+            csv += row + '\n';
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `finance-requisitions-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function showError(message) {
+        document.getElementById('loadingState').style.display = 'block';
+        document.getElementById('loadingState').innerHTML = `<i class="fas fa-exclamation-circle" style="color: #c62828;"></i><p>${message}</p>`;
+    }
+
+    // ====== Auto-refresh every 30 seconds ======
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            loadData();
+        }
+    }, 30000);
+
+    document.addEventListener('DOMContentLoaded', loadData);
+</script>
+
+</body>
+</html>

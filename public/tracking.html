@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Track Requisition - Samanga Utilities</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .container { max-width: 900px; width: 100%; background: white; border-radius: 20px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #1a73e8; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        .nav-links { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .nav-links a { color: #1a73e8; text-decoration: none; font-weight: 500; }
+        .nav-links a:hover { text-decoration: underline; }
+        .search-box { display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+        .search-box input { flex: 1; padding: 14px 20px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; min-width: 200px; transition: border-color 0.3s; }
+        .search-box input:focus { outline: none; border-color: #1a73e8; }
+        .search-box button { padding: 14px 30px; background: #1a73e8; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+        .search-box button:hover { background: #1557b0; }
+
+        .result-card { display: none; border-radius: 16px; overflow: hidden; border: 1px solid #e9ecef; margin-top: 10px; }
+        .result-card.visible { display: block; }
+        .result-header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #e9ecef; }
+        .result-header .ref { font-weight: 700; font-size: 20px; color: #1a73e8; }
+        .status-badge { padding: 6px 18px; border-radius: 20px; font-weight: 600; font-size: 14px; text-transform: uppercase; }
+        .status-pending { background: #fff3e0; color: #e65100; }
+        .status-supervisor_approved { background: #e3f2fd; color: #0d47a1; }
+        .status-manager_approved { background: #e8f5e9; color: #1b5e20; }
+        .status-ceo_approved { background: #f3e5f5; color: #4a148c; }
+        .status-finance_approved { background: #e0f7fa; color: #00695c; }
+        .status-completed { background: #c8e6c9; color: #1b5e20; }
+        .status-rejected { background: #ffcdd2; color: #b71c1c; }
+
+        .result-body { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .result-body .info-item { padding: 8px 0; }
+        .result-body .info-item .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .result-body .info-item .value { font-size: 16px; font-weight: 500; color: #222; margin-top: 2px; }
+
+        .timeline { grid-column: 1 / -1; margin-top: 10px; padding-top: 20px; border-top: 1px solid #e9ecef; }
+        .timeline h3 { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+        .timeline-steps { display: flex; flex-wrap: wrap; gap: 8px; }
+        .step { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 20px; font-size: 13px; background: #f8f9fa; color: #888; }
+        .step .icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+        .step.completed { background: #e8f5e9; color: #1b5e20; }
+        .step.completed .icon { background: #2e7d32; color: white; }
+        .step.active { background: #e3f2fd; color: #0d47a1; border: 2px solid #1a73e8; }
+        .step.active .icon { background: #1a73e8; color: white; }
+        .step.pending { background: #f8f9fa; color: #888; }
+        .step.pending .icon { background: #ddd; color: #888; }
+
+        .items-section { grid-column: 1 / -1; padding-top: 16px; border-top: 1px solid #e9ecef; }
+        .items-section h3 { font-size: 14px; color: #888; text-transform: uppercase; margin-bottom: 12px; }
+        .items-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .items-table th { text-align: left; padding: 8px 12px; background: #f8f9fa; font-weight: 600; }
+        .items-table td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
+        .items-table .total { font-weight: 700; color: #1a73e8; }
+
+        .actions { grid-column: 1 / -1; display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid #e9ecef; flex-wrap: wrap; }
+        .actions .btn { padding: 10px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; }
+        .actions .btn-primary { background: #1a73e8; color: white; }
+        .actions .btn-primary:hover { background: #1557b0; }
+        .actions .btn-success { background: #2e7d32; color: white; }
+        .actions .btn-success:hover { background: #1b5e20; }
+        .actions .btn-outline { background: transparent; color: #1a73e8; border: 2px solid #1a73e8; }
+        .actions .btn-outline:hover { background: #e8f0fe; }
+
+        .not-found { display: none; text-align: center; padding: 40px; color: #888; }
+        .not-found.visible { display: block; }
+        .not-found i { font-size: 48px; color: #ddd; display: block; margin-bottom: 12px; }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .result-body { grid-template-columns: 1fr; }
+            .search-box { flex-direction: column; }
+            .search-box button { width: 100%; }
+            .result-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .actions { flex-direction: column; }
+            .actions .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="/">📝 Submit Requisition</a>
+            <a href="/tracking">🔍 Track Requisition</a>
+            <a href="/finance-dashboard.html">📊 Finance Dashboard</a>
+        </div>
+
+        <h1><i class="fas fa-search" style="color: #1a73e8;"></i> Track Requisition</h1>
+        <p class="subtitle">Enter your reference number to check the status</p>
+
+        <div class="search-box">
+            <input type="text" id="refInput" placeholder="e.g. SAM-123456" />
+            <button onclick="trackRequisition()"><i class="fas fa-search"></i> Track</button>
+        </div>
+
+        <div id="resultCard" class="result-card">
+            <div class="result-header">
+                <span class="ref" id="displayRef">SAM-123456</span>
+                <span class="status-badge" id="displayStatus">Pending</span>
+            </div>
+            <div class="result-body" id="resultBody"></div>
+        </div>
+
+        <div id="notFound" class="not-found">
+            <i class="fas fa-file-invoice"></i>
+            <p><strong>Requisition not found</strong></p>
+            <p style="font-size: 14px;">Please check the reference number and try again.</p>
+        </div>
+    </div>
+
+    <script>
+        async function trackRequisition() {
+            const ref = document.getElementById('refInput').value.trim();
+            const resultCard = document.getElementById('resultCard');
+            const notFound = document.getElementById('notFound');
+
+            if (!ref) {
+                alert('Please enter a reference number.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/requisitions');
+                const data = await response.json();
+
+                if (!data.success) {
+                    alert('Failed to fetch data. Please try again.');
+                    return;
+                }
+
+                const req = data.data.find(r => r.referenceNumber === ref);
+
+                if (!req) {
+                    resultCard.classList.remove('visible');
+                    notFound.classList.add('visible');
+                    return;
+                }
+
+                notFound.classList.remove('visible');
+                renderResult(req);
+                resultCard.classList.add('visible');
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Network error. Please try again.');
+            }
+        }
+
+        function renderResult(req) {
+            document.getElementById('displayRef').textContent = req.referenceNumber || 'N/A';
+            const statusBadge = document.getElementById('displayStatus');
+            statusBadge.textContent = (req.status || 'pending').replace(/_/g, ' ').toUpperCase();
+            statusBadge.className = `status-badge status-${req.status || 'pending'}`;
+
+            const body = document.getElementById('resultBody');
+            const total = req.items.reduce((sum, i) => sum + (i.totalPrice || i.quantity * (i.unitPrice || 0)), 0);
+
+            const roles = ['supervisor', 'manager', 'ceo', 'finance'];
+            const roleLabels = { supervisor: 'Supervisor', manager: 'Manager', ceo: 'CEO', finance: 'Finance' };
+            let stepsHtml = '';
+            let foundPending = false;
+
+            roles.forEach(role => {
+                const approval = req.approvals.find(a => a.role === role);
+                const status = approval ? approval.status : 'pending';
+                const label = roleLabels[role] || role;
+
+                let stepClass = 'pending';
+                let icon = '•';
+                if (status === 'approved') {
+                    stepClass = 'completed';
+                    icon = '✓';
+                } else if (status === 'rejected') {
+                    stepClass = 'completed';
+                    icon = '✗';
+                } else if (!foundPending) {
+                    stepClass = 'active';
+                    foundPending = true;
+                    icon = '⏳';
+                }
+
+                stepsHtml += `
+                    <div class="step ${stepClass}">
+                        <span class="icon">${icon}</span>
+                        ${label}
+                    </div>
+                `;
+            });
+
+            let itemsHtml = '';
+            req.items.forEach(item => {
+                const price = item.totalPrice || item.quantity * (item.unitPrice || 0);
+                itemsHtml += `
+                    <tr>
+                        <td>${item.itemName || 'N/A'}</td>
+                        <td>${item.quantity || 0}</td>
+                        <td>${item.unitPrice ? '$' + item.unitPrice : 'N/A'}</td>
+                        <td>$${price.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            body.innerHTML = `
+                <div class="info-item"><div class="label">Project Name</div><div class="value">${req.projectName || 'N/A'}</div></div>
+                <div class="info-item"><div class="label">Voucher Number</div><div class="value">${req.voucherNumber || 'N/A'}</div></div>
+                <div class="info-item"><div class="label">Requestor</div><div class="value">${req.requestor?.name || 'N/A'}</div></div>
+                <div class="info-item"><div class="label">Email</div><div class="value">${req.requestor?.email || 'N/A'}</div></div>
+                <div class="info-item"><div class="label">Department</div><div class="value">${req.requestor?.department || 'N/A'}</div></div>
+                <div class="info-item"><div class="label">Total Amount</div><div class="value" style="color: #1a73e8; font-weight: 700;">$${total.toFixed(2)}</div></div>
+
+                <div class="timeline">
+                    <h3><i class="fas fa-tasks"></i> Approval Timeline</h3>
+                    <div class="timeline-steps">${stepsHtml}</div>
+                </div>
+
+                <div class="items-section">
+                    <h3><i class="fas fa-box"></i> Items Requested</h3>
+                    <table class="items-table">
+                        <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                    <button class="btn btn-success" onclick="downloadFilledForm('${req.referenceNumber}')"><i class="fas fa-download"></i> Download Filled Form</button>
+                </div>
+            `;
+        }
+
+        // ===== DOWNLOAD FILLED FORM (from tracking page) =====
+        async function downloadFilledForm(ref) {
+            try {
+                const response = await fetch('/api/requisitions');
+                const data = await response.json();
+
+                if (!data.success) {
+                    alert('Failed to fetch requisition data.');
+                    return;
+                }
+
+                const req = data.data.find(r => r.referenceNumber === ref);
+                if (!req) {
+                    alert('Requisition not found.');
+                    return;
+                }
+
+                const total = req.items.reduce((sum, i) => sum + (i.totalPrice || i.quantity * (i.unitPrice || 0)), 0);
+
+                let itemsRows = '';
+                req.items.forEach(item => {
+                    const price = item.totalPrice || item.quantity * (item.unitPrice || 0);
+                    itemsRows += `
+                        <tr>
+                            <td>${item.itemName || 'N/A'}</td>
+                            <td style="text-align:center;">${item.quantity || 0}</td>
+                            <td style="text-align:right;">${item.unitPrice ? '$' + item.unitPrice.toFixed(2) : 'N/A'}</td>
+                            <td style="text-align:right;font-weight:600;">$${price.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                const statusLabel = (req.status || 'pending').replace(/_/g, ' ').toUpperCase();
+
+                let approvalStatus = '';
+                const roles = ['supervisor', 'manager', 'ceo', 'finance'];
+                const roleLabels = { supervisor: 'Supervisor', manager: 'Manager', ceo: 'CEO', finance: 'Finance' };
+                roles.forEach(role => {
+                    const approval = req.approvals.find(a => a.role === role);
+                    const status = approval ? approval.status : 'pending';
+                    const label = roleLabels[role] || role;
+                    const icon = status === 'approved' ? '✅' : status === 'rejected' ? '❌' : '⏳';
+                    approvalStatus += `<tr><td>${label}</td><td>${icon} ${status.toUpperCase()}</td></tr>`;
+                });
+
+                const formHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Requisition ${req.referenceNumber}</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 30px; background: #fff; }
+                        .header { text-align: center; border-bottom: 3px solid #1a73e8; padding-bottom: 20px; margin-bottom: 25px; }
+                        .header h1 { color: #1a73e8; font-size: 28px; margin: 0; }
+                        .header .ref { font-size: 18px; color: #555; margin-top: 5px; }
+                        .header .status { display: inline-block; padding: 4px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-top: 8px; background: ${req.status === 'completed' ? '#c8e6c9' : req.status === 'rejected' ? '#ffcdd2' : '#fff3e0'}; color: ${req.status === 'completed' ? '#1b5e20' : req.status === 'rejected' ? '#b71c1c' : '#e65100'}; }
+                        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 30px; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+                        .grid .label { font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; }
+                        .grid .value { font-size: 16px; color: #222; }
+                        h3 { color: #333; margin: 25px 0 12px 0; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+                        th { background: #f5f5f5; font-weight: 600; }
+                        .total-row td { font-weight: 700; background: #f0f4ff; }
+                        .approval-table { width: auto; margin: 10px 0; }
+                        .approval-table td { padding: 6px 20px; }
+                        .footer { margin-top: 30px; text-align: center; color: #888; font-size: 12px; border-top: 1px solid #ddd; padding-top: 20px; }
+                        .print-btn { background: #1a73e8; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 10px 0; }
+                        .print-btn:hover { background: #1557b0; }
+                        @media print { .no-print { display: none; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>📋 Samanga Utilities Requisition</h1>
+                        <div class="ref">Reference: <strong>${req.referenceNumber}</strong></div>
+                        <div class="status">${statusLabel}</div>
+                    </div>
+
+                    <div class="grid">
+                        <div><div class="label">Project Name</div><div class="value">${req.projectName || 'N/A'}</div></div>
+                        <div><div class="label">Voucher Number</div><div class="value">${req.voucherNumber || 'N/A'}</div></div>
+                        <div><div class="label">Requestor</div><div class="value">${req.requestor?.name || 'N/A'}</div></div>
+                        <div><div class="label">Email</div><div class="value">${req.requestor?.email || 'N/A'}</div></div>
+                        <div><div class="label">Department</div><div class="value">${req.requestor?.department || 'N/A'}</div></div>
+                        <div><div class="label">Submitted</div><div class="value">${new Date(req.createdAt).toLocaleString()}</div></div>
+                    </div>
+
+                    <h3>📦 Items Requested</h3>
+                    <table>
+                        <thead><tr><th>Item Name</th><th style="text-align:center;">Quantity</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">Total</th></tr></thead>
+                        <tbody>
+                            ${itemsRows}
+                            <tr class="total-row"><td colspan="3" style="text-align:right;">GRAND TOTAL</td><td style="text-align:right;">$${total.toFixed(2)}</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>✅ Approval Status</h3>
+                    <table class="approval-table">
+                        <thead><tr><th>Role</th><th>Status</th></tr></thead>
+                        <tbody>${approvalStatus}</tbody>
+                    </table>
+
+                    <div style="margin: 20px 0; padding: 12px; background: #f0f4ff; border-radius: 6px; border-left: 4px solid #1a73e8;">
+                        <strong>📌 Note:</strong> This is a system-generated document. For any queries, please contact the Finance Department.
+                    </div>
+
+                    <div class="no-print" style="text-align: center; margin-top: 20px;">
+                        <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+                    </div>
+
+                    <div class="footer">
+                        Generated on ${new Date().toLocaleString()} &bull; Samanga Utilities Requisition System
+                    </div>
+                </body>
+                </html>
+                `;
+
+                const blob = new Blob([formHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `requisition-${req.referenceNumber}.html`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+            } catch (error) {
+                console.error('Error downloading form:', error);
+                alert('Failed to download form. Please try again.');
+            }
+        }
+
+        document.getElementById('refInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') trackRequisition();
+        });
+    </script>
+</body>
+</html>
