@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const requisitionSchema = new mongoose.Schema({
+  // === PROJECT INFORMATION ===
   projectName: {
     type: String,
     required: [true, 'Project name is required'],
@@ -12,6 +13,8 @@ const requisitionSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
+
+  // === ITEMS (Editable by Procurement) ===
   items: [{
     itemName: {
       type: String,
@@ -22,15 +25,30 @@ const requisitionSchema = new mongoose.Schema({
       required: true,
       min: [1, 'Quantity must be at least 1']
     },
+    originalQuantity: {
+      type: Number,
+      default: 0
+    },
     unitPrice: {
+      type: Number,
+      default: 0
+    },
+    originalUnitPrice: {
       type: Number,
       default: 0
     },
     totalPrice: {
       type: Number,
       default: 0
-    }
+    },
+    // Track who edited and when
+    priceEditedBy: String,
+    priceEditedDate: Date,
+    quantityEditedBy: String,
+    quantityEditedDate: Date
   }],
+
+  // === REQUESTOR INFO ===
   requestor: {
     name: {
       type: String,
@@ -42,24 +60,42 @@ const requisitionSchema = new mongoose.Schema({
     },
     department: String
   },
+
+  // === AUTO-ROUTING STATUS ===
   status: {
     type: String,
-    enum: ['pending', 'supervisor_approved', 'manager_approved', 'ceo_approved', 'finance_approved', 'completed', 'rejected'],
+    enum: [
+      'pending',
+      'supervisor_approved',
+      'procurement_approved',
+      'ceo_approved',
+      'manager_approved',
+      'finance_approved',
+      'completed',
+      'rejected'
+    ],
     default: 'pending'
   },
+
+  // === APPROVAL HISTORY ===
   approvals: [{
     role: {
       type: String,
-      enum: ['supervisor', 'manager', 'ceo', 'finance']
+      enum: ['supervisor', 'procurement', 'ceo', 'manager', 'finance']
     },
     approverEmail: String,
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected']
     },
-    comment: String,
+    comment: {
+      type: String,
+      default: ''
+    },
     date: Date
   }],
+
+  // === TRACKING HISTORY ===
   trackingHistory: [{
     action: String,
     fromRole: String,
@@ -70,6 +106,8 @@ const requisitionSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+
+  // === SYSTEM FIELDS ===
   referenceNumber: {
     type: String,
     unique: true
@@ -84,6 +122,7 @@ const requisitionSchema = new mongoose.Schema({
   }
 });
 
+// Auto-generate reference number
 requisitionSchema.pre('save', function(next) {
   if (!this.referenceNumber) {
     const prefix = 'SAM-';

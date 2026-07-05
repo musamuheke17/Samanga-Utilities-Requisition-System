@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit & Approve Requisition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #1a73e8;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header-info .details p {
+            margin: 4px 0;
+            color: #333;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-pending { background: #fff3e0; color: #e65100; }
+        .status-supervisor_approved { background: #e3f2fd; color: #0d47a1; }
+        .status-procurement_approved { background: #e8f5e9; color: #1b5e20; }
+        .status-ceo_approved { background: #f3e5f5; color: #4a148c; }
+        .status-manager_approved { background: #e0f7fa; color: #00695c; }
+        .status-finance_approved { background: #c8e6c9; color: #1b5e20; }
+        .status-completed { background: #c8e6c9; color: #1b5e20; }
+        .status-rejected { background: #ffcdd2; color: #b71c1c; }
+
+        .role-badge {
+            display: inline-block;
+            background: #1a73e8;
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #f0f4ff;
+            font-weight: 600;
+        }
+        .editable {
+            background: #fff8e1;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 6px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+        input[type="number"]:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+        .original-value {
+            color: #888;
+            font-size: 11px;
+            display: block;
+        }
+        .grand-total {
+            background: #e3f2fd;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .grand-total td {
+            padding: 12px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        .btn-save { background: #1a73e8; color: white; }
+        .btn-save:hover { background: #1557b0; }
+        .btn-approve { background: #2e7d32; color: white; }
+        .btn-approve:hover { background: #1b5e20; }
+        .btn-reject { background: #c62828; color: white; }
+        .btn-reject:hover { background: #b71c1c; }
+
+        .comment-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .comment {
+            background: white;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 6px;
+            border-left: 4px solid #1a73e8;
+        }
+        .comment .author {
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        .comment .date {
+            color: #888;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            min-height: 60px;
+            font-family: inherit;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        .approval-history {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .approval-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 0;
+        }
+        .approval-step .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ddd;
+            flex-shrink: 0;
+        }
+        .approval-step .dot.done { background: #2e7d32; }
+        .approval-step .dot.active { background: #1a73e8; animation: pulse 1s infinite; }
+        .approval-step .dot.rejected { background: #c62828; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .header-info { flex-direction: column; }
+            table { font-size: 13px; }
+            input[type="number"] { width: 60px; }
+            .btn { padding: 10px 18px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>✏️ Edit & Approve Requisition</h2>
+    <div id="requisitionData">
+        <div class="loading">
+            <p>⏳ Loading requisition...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const requisitionId = urlParams.get('id');
+    const role = urlParams.get('role');
+
+    if (!requisitionId || !role) {
+        document.getElementById('requisitionData').innerHTML = `
+            <div class="alert alert-error">
+                ❌ <strong>Error:</strong> Missing requisition ID or role. Please check the link.
+            </div>
+        `;
+    } else {
+        loadRequisition(requisitionId, role);
+    }
+
+    async function loadRequisition(id, role) {
+        try {
+            const response = await fetch(`/api/requisitions/${id}/tracking`);
+            const result = await response.json();
+
+            if (!result.success) {
+                document.getElementById('requisitionData').innerHTML = `
+                    <div class="alert alert-error">❌ Error: ${result.message}</div>
+                `;
+                return;
+            }
+
+            const req = result.data.requisition;
+            const approvals = result.data.approvals || [];
+            const comments = result.data.comments || [];
+
+            renderRequisition(req, approvals, comments, role);
+        } catch (error) {
+            document.getElementById('requisitionData').innerHTML = `
+                <div class="alert alert-error">❌ Error loading requisition: ${error.message}</div>
+            `;
+        }
+    }
+
+    function renderRequisition(req, approvals, comments, role) {
+        const roleLabels = {
+            supervisor: 'Project Supervisor',
+            procurement: 'Procurement Office',
+            ceo: 'CEO',
+            manager: 'Project Manager',
+            finance: 'Finance Department'
+        };
+
+        const displayRole = roleLabels[role] || role;
+
+        // Calculate total
+        let grandTotal = 0;
+        req.items.forEach(item => {
+            grandTotal += (item.quantity || 0) * (item.unitPrice || 0);
+        });
+
+        // Build items table
+        let itemsHtml = req.items.map((item, index) => {
+            const total = (item.quantity || 0) * (item.unitPrice || 0);
+            return `
+                <tr>
+                    <td>
+                        <strong>${item.itemName}</strong>
+                        ${item.originalQuantity && item.originalQuantity !== item.quantity ?
+                            `<span class="original-value">🔹 Original: ${item.originalQuantity} x $${(item.originalUnitPrice || 0).toFixed(2)}</span>` : ''}
+                        ${item.editedBy?.role ? `<span class="original-value">✏️ Edited by: ${item.editedBy.role}</span>` : ''}
+                    </td>
+                    <td>
+                        <input type="number" id="qty_${index}" value="${item.quantity}" min="0" step="1" class="editable">
+                    </td>
+                    <td>
+                        <input type="number" id="price_${index}" value="${item.unitPrice || 0}" min="0" step="0.01" class="editable">
+                    </td>
+                    <td id="total_${index}" style="font-weight:bold;">$${total.toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        // Build approval history
+        let approvalHtml = approvals.map(a => {
+            const label = roleLabels[a.role] || a.role;
+            let dotClass = '';
+            if (a.status === 'approved') dotClass = 'done';
+            else if (a.status === 'rejected') dotClass = 'rejected';
+            else if (a.role === role) dotClass = 'active';
+            const dateStr = a.date ? new Date(a.date).toLocaleDateString() : '';
+            return `
+                <div class="approval-step">
+                    <div class="dot ${dotClass}"></div>
+                    <div>
+                        <strong>${label}</strong>
+                        <span style="text-transform:uppercase;font-size:13px;color:#555;">- ${a.status}</span>
+                        ${dateStr ? `<span style="color:#888;font-size:12px;">${dateStr}</span>` : ''}
+                        ${a.comment ? `<div style="font-size:13px;color:#555;">💬 ${a.comment}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Build comments
+        let commentsHtml = comments.map(c => `
+            <div class="comment">
+                <span class="author">${c.author?.name || 'Unknown'}</span>
+                <span style="color:#888;font-size:13px;">(${c.author?.role || 'User'})</span>
+                <span class="date">${new Date(c.date).toLocaleString()}</span>
+                <div style="margin-top:4px;">${c.comment}</div>
+            </div>
+        `).join('');
+
+        document.getElementById('requisitionData').innerHTML = `
+            <!-- Header -->
+            <div class="header-info">
+                <div class="details">
+                    <p><strong>📄 Reference:</strong> ${req.referenceNumber}</p>
+                    <p><strong>📁 Project:</strong> ${req.projectName}</p>
+                    <p><strong>🎫 Voucher:</strong> ${req.voucherNumber}</p>
+                    <p><strong>👤 Requestor:</strong> ${req.requestor?.name} (${req.requestor?.email})</p>
+                    <p><strong>🏢 Department:</strong> ${req.requestor?.department || 'N/A'}</p>
+                </div>
+                <div style="text-align:right;">
+                    <div><span class="status-badge status-${req.status}">${req.status.replace(/_/g, ' ').toUpperCase()}</span></div>
+                    <div style="margin-top:8px;"><span class="role-badge">${displayRole}</span></div>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <h3>📦 Items</h3>
+            <p style="color:#666;font-size:14px;margin-bottom:10px;">✏️ Edit quantities and prices directly in the table below.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:35%;">Item Name</th>
+                        <th style="width:20%;text-align:center;">Quantity</th>
+                        <th style="width:20%;text-align:center;">Unit Price ($)</th>
+                        <th style="width:25%;text-align:right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTable">
+                    ${itemsHtml}
+                </tbody>
+                <tfoot>
+                    <tr class="grand-total">
+                        <td colspan="3" style="text-align:right;">GRAND TOTAL</td>
+                        <td id="grandTotal" style="text-align:right;">$${grandTotal.toFixed(2)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button class="btn btn-save" onclick="saveChanges('${req._id}', '${role}')">💾 Save Changes</button>
+                <button class="btn btn-approve" onclick="submitApproval('${req._id}', '${role}', 'approved')">✅ Approve</button>
+                <button class="btn btn-reject" onclick="submitApproval('${req._id}', '${role}', 'rejected')">❌ Reject</button>
+            </div>
+
+            <!-- Comments -->
+            <div class="comment-section">
+                <h3>💬 Comments</h3>
+                <div id="commentsContainer" style="max-height:250px;overflow-y:auto;">
+                    ${commentsHtml || '<p style="color:#888;">No comments yet.</p>'}
+                </div>
+                <div style="margin-top:10px;">
+                    <textarea id="newComment" placeholder="Write a comment here..."></textarea>
+                    <button class="btn btn-save" onclick="addComment('${req._id}', '${role}')">➕ Add Comment</button>
+                </div>
+            </div>
+
+            <!-- Approval History -->
+            <div class="approval-history">
+                <h3>📌 Approval History</h3>
+                ${approvalHtml || '<p style="color:#888;">No approvals yet.</p>'}
+            </div>
+
+            <div style="margin-top:15px;padding:12px;background:#f5f5f5;border-radius:6px;font-size:13px;color:#888;">
+                <p>📌 System-generated document. All changes are tracked.</p>
+                <p>📌 Generated on: ${new Date().toLocaleString()}</p>
+            </div>
+        `;
+
+        // Add event listeners for live total updates
+        req.items.forEach((item, index) => {
+            const qtyInput = document.getElementById(`qty_${index}`);
+            const priceInput = document.getElementById(`price_${index}`);
+            if (qtyInput) qtyInput.addEventListener('input', () => updateTotal(index));
+            if (priceInput) priceInput.addEventListener('input', () => updateTotal(index));
+        });
+    }
+
+    function updateTotal(index) {
+        const qty = parseFloat(document.getElementById(`qty_${index}`).value) || 0;
+        const price = parseFloat(document.getElementById(`price_${index}`).value) || 0;
+        const total = qty * price;
+        document.getElementById(`total_${index}`).textContent = '$' + total.toFixed(2);
+        updateGrandTotal();
+    }
+
+    function updateGrandTotal() {
+        const totalCells = document.querySelectorAll('#itemsTable td:last-child');
+        let grandTotal = 0;
+        totalCells.forEach(td => {
+            const val = parseFloat(td.textContent.replace('$', ''));
+            if (!isNaN(val)) grandTotal += val;
+        });
+        document.getElementById('grandTotal').textContent = '$' + grandTotal.toFixed(2);
+    }
+
+    async function saveChanges(id, role) {
+        try {
+            const rows = document.querySelectorAll('#itemsTable tr');
+            const items = [];
+            rows.forEach((row, index) => {
+                const qtyInput = document.getElementById(`qty_${index}`);
+                const priceInput = document.getElementById(`price_${index}`);
+                if (qtyInput && priceInput) {
+                    items.push({
+                        quantity: parseFloat(qtyInput.value) || 0,
+                        unitPrice: parseFloat(priceInput.value) || 0
+                    });
+                }
+            });
+
+            const response = await fetch(`/api/requisitions/${id}/items`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items, role })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('✅ Changes saved successfully!');
+                loadRequisition(id, role);
+            } else {
+                alert('❌ Error: ' + result.message);
+            }
+        } catch (error) {
+            alert('❌ Error saving changes: ' + error.message);
+        }
+    }
+
+    async function addComment(id, role) {
+        const comment = document.getElementById('newComment').value.trim();
+        if (!comment) {
+            alert('Please write a comment first.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/requisitions/${id}/comment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comment, role })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('newComment').value = '';
+                loadRequisition(id, role);
+            } else {
+                alert('❌ Error: ' + result.message);
+            }
+        } catch (error) {
+            alert('❌ Error adding comment: ' + error.message);
+        }
+    }
+
+    async function submitApproval(id, role, status) {
+        const comment = document.getElementById('newComment').value.trim();
+        const confirmation = confirm(`Are you sure you want to ${status} this requisition?`);
+        if (!confirmation) return;
+
+        try {
+            // Save current items first
+            const rows = document.querySelectorAll('#itemsTable tr');
+            const items = [];
+            rows.forEach((row, index) => {
+                const qtyInput = document.getElementById(`qty_${index}`);
+                const priceInput = document.getElementById(`price_${index}`);
+                if (qtyInput && priceInput) {
+                    items.push({
+                        quantity: parseFloat(qtyInput.value) || 0,
+                        unitPrice: parseFloat(priceInput.value) || 0
+                    });
+                }
+            });
+
+            await fetch(`/api/requisitions/${id}/items`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items, role })
+            });
+
+            // Add comment if provided
+            if (comment) {
+                await fetch(`/api/requisitions/${id}/comment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comment, role })
+                });
+            }
+
+            // Submit approval
+            const response = await fetch(`/api/requisitions/${id}/approve?role=${role}&status=${status}&comment=${encodeURIComponent(comment)}`);
+            const result = await response.json();
+
+            if (result.success) {
+                alert(`✅ Requisition ${status} successfully!`);
+                window.location.href = '/tracking';
+            } else {
+                alert('❌ Error: ' + result.message);
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        }
+    }
+</script>
+
+</body>
+</html>
